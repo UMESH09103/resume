@@ -16,6 +16,7 @@ const Contact = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { target } = e;
@@ -25,24 +26,45 @@ const Contact = () => {
       ...form,
       [name]: value,
     });
+    setError(""); // Clear error when user types
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
+
+    // Basic form validation
+    if (!form.name || !form.email || !form.message) {
+      setLoading(false);
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    // Hardcoded EmailJS configuration (replace with your actual IDs)
+    const serviceId = "service_1qbc2p8"; // Replace with your EmailJS Service ID
+    const templateId = "template_do4omer"; // Replace with your EmailJS Template ID
+    const publicKey = "8D78uw_PVEwmhntrj"; // Replace with your EmailJS Public Key
+
+    // Add current date and time to the message
+    const currentDateTime = new Date().toLocaleString("en-US", {
+      timeZone: "Asia/Kolkata",
+      dateStyle: "full",
+      timeStyle: "short",
+    }); // e.g., "Saturday, August 30, 2025, 01:54 AM IST"
 
     emailjs
       .send(
-        import.meta.env.VITE_APP_EMAILJS_SERVICE_ID,
-        import.meta.env.VITE_APP_EMAILJS_TEMPLATE_ID,
+        serviceId,
+        templateId,
         {
           from_name: form.name,
-          to_name: "JavaScript Mastery",
+          to_name: "Umesh Rajendra Jadhav",
           from_email: form.email,
-          to_email: "sujata@jsmastery.pro",
-          message: form.message,
+          to_email: "umeshrj629@gmail.com",
+          message: `Received on ${currentDateTime}:\n${form.message}`,
         },
-        import.meta.env.VITE_APP_EMAILJS_PUBLIC_KEY
+        publicKey
       )
       .then(
         () => {
@@ -57,8 +79,8 @@ const Contact = () => {
         },
         (error) => {
           setLoading(false);
-          console.error(error);
-
+          console.error("EmailJS Error:", error);
+          setError("Failed to send message. Please check your internet connection or try again later.");
           alert("Ahh, something went wrong. Please try again.");
         }
       );
@@ -113,6 +135,8 @@ const Contact = () => {
               className='bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium'
             />
           </label>
+
+          {error && <p className='text-red-500 text-sm'>{error}</p>}
 
           <button
             type='submit'
