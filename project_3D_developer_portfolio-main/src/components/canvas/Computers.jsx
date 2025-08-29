@@ -4,8 +4,11 @@ import { OrbitControls, Preload, useGLTF } from "@react-three/drei";
 
 import CanvasLoader from "../Loader";
 
+// Preload the GLTF asset
+useGLTF.preload("/desktop_pc/scene.gltf");
+
 const Computers = ({ isMobile }) => {
-  const computer = useGLTF("/desktop_pc/scene.gltf"); // Updated to public path
+  const computer = useGLTF("/desktop_pc/scene.gltf");
 
   return (
     <mesh>
@@ -14,31 +17,31 @@ const Computers = ({ isMobile }) => {
         position={[-20, 50, 10]}
         angle={0.12}
         penumbra={1}
-        intensity={1}
-        castShadow
+        intensity={isMobile ? 0.5 : 1} // Reduce intensity on mobile
+        castShadow={!isMobile}
         shadow-mapSize={1024}
       />
-      <pointLight intensity={1} />
+      <pointLight intensity={isMobile ? 0.5 : 1} />
       <primitive
         object={computer.scene}
-        scale={isMobile ? 0.7 : 0.75}
-        position={isMobile ? [0, -3, -2.2] : [0, -3.25, -1.5]}
+        scale={isMobile ? 0.6 : 0.75} // Slightly smaller scale for mobile
+        position={isMobile ? [0, -2.5, -2.2] : [0, -3.25, -1.5]}
         rotation={[-0.01, -0.2, -0.1]}
       />
     </mesh>
   );
 };
 
-const ComputersCanvas = () => {
+const ComputersCanvas = ({ isMobile: parentIsMobile }) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 500px)");
 
-    setIsMobile(mediaQuery.matches);
+    setIsMobile(mediaQuery.matches || parentIsMobile); // Use parent prop if provided
 
     const handleMediaQueryChange = (event) => {
-      setIsMobile(event.matches);
+      setIsMobile(event.matches || parentIsMobile);
     };
 
     mediaQuery.addEventListener("change", handleMediaQueryChange);
@@ -46,15 +49,16 @@ const ComputersCanvas = () => {
     return () => {
       mediaQuery.removeEventListener("change", handleMediaQueryChange);
     };
-  }, []);
+  }, [parentIsMobile]);
 
   return (
     <Canvas
       frameloop="demand"
-      shadows
-      dpr={[1, 2]}
+      shadows={!isMobile}
+      dpr={isMobile ? 1 : [1, 2]}
       camera={{ position: [20, 3, 5], fov: 25 }}
-      gl={{ preserveDrawingBuffer: true, outputColorSpace: "srgb" }} // Updated for Three.js compatibility
+      gl={{ preserveDrawingBuffer: true, outputColorSpace: "srgb" }}
+      style={{ width: "100%", height: "100%", minHeight: "350px" }} // Ensure visible size
     >
       <Suspense fallback={<CanvasLoader />}>
         <OrbitControls
@@ -64,7 +68,6 @@ const ComputersCanvas = () => {
         />
         <Computers isMobile={isMobile} />
       </Suspense>
-
       <Preload all />
     </Canvas>
   );
